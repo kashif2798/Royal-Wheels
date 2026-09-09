@@ -8,7 +8,7 @@ services:
   - type: web
     name: royalwheels
     runtime: python
-    buildCommand: pip install -r requirements.txt && python backend/manage.py migrate --noinput && python backend/manage.py collectstatic --noinput
+    buildCommand: pip install -r requirements.txt && python backend/manage.py migrate --noinput && python backend/manage.py seed_partners && python backend/manage.py collectstatic --noinput
     startCommand: gunicorn backend.wsgi:application --chdir backend --bind 0.0.0.0:$PORT
     envVars:
       - key: DATABASE_URL

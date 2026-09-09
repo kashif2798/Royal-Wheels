@@ -80,9 +80,16 @@ async function sendOtp(flow, channel, target, purpose) {
   };
 
   if (data.debug_otp) {
-    alert(`OTP sent. DEV OTP: ${data.debug_otp}`);
+    const targetInputId = flow === "customerSignup"
+      ? (channel === "email" ? "emailOtp" : "phoneOtp")
+      : (channel === "email" ? "resetEmailOtp" : "resetPhoneOtp");
+    const otpInput = document.getElementById(targetInputId);
+    if (otpInput) {
+      otpInput.value = data.debug_otp;
+    }
+    alert(`Your OTP is: ${data.debug_otp}\n\n(Auto-filled for you in Demo Mode. Click 'Verify' to proceed)`);
   } else {
-    alert("OTP sent successfully.");
+    alert("OTP sent successfully to your " + channel + ".");
   }
 }
 

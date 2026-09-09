@@ -138,34 +138,28 @@ def _normalize_indian_phone(raw_phone):
 
 
 def _send_email_otp(target, code):
-    if "console" in str(getattr(settings, "EMAIL_BACKEND", "")).lower():
-        if settings.DEBUG:
-            print(f"[DEV EMAIL OTP] {target}: {code}")
-            return True, "DEV mode: OTP generated (check alert/server log)."
-        return False, "Email backend is console. Configure SMTP to deliver OTP to mailbox."
-
     if not settings.EMAIL_HOST or not settings.EMAIL_HOST_USER:
-        if settings.DEBUG:
-            print(f"[DEV EMAIL OTP] {target}: {code}")
-            return True, "DEV mode: OTP generated (check alert/server log)."
-        return False, "Email service is not configured. Set EMAIL_HOST and EMAIL_HOST_USER."
+        print(f"[DEMO EMAIL OTP] {target}: {code}")
+        return True, f"Demo mode: Your OTP is {code}"
 
-    send_mail(
-        subject="RoyalWheels OTP Verification",
-        message=f"Your OTP is {code}. It is valid for 5 minutes.",
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@royalwheels.local"),
-        recipient_list=[target],
-        fail_silently=False,
-    )
-    return True, "OTP sent to email."
+    try:
+        send_mail(
+            subject="RoyalWheels OTP Verification",
+            message=f"Your OTP is {code}. It is valid for 5 minutes.",
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@royalwheels.local"),
+            recipient_list=[target],
+            fail_silently=False,
+        )
+        return True, "OTP sent to email."
+    except Exception as exc:
+        print(f"[EMAIL SEND ERROR] {exc} -> Demo OTP: {code}")
+        return True, f"Demo mode: Your OTP is {code}"
 
 
 def _send_phone_otp(target, code):
     if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_FROM_NUMBER:
-        if settings.DEBUG:
-            print(f"[DEV SMS OTP] {target}: {code}")
-            return True, "DEV mode: OTP generated (check alert/server log)."
-        return False, "SMS OTP is not active. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER."
+        print(f"[DEMO SMS OTP] {target}: {code}")
+        return True, f"Demo mode: Your OTP is {code}"
 
     api_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json"
     payload = urllib.parse.urlencode(
@@ -187,11 +181,10 @@ def _send_phone_otp(target, code):
         with urllib.request.urlopen(request_obj, timeout=12) as response:
             status_code = getattr(response, "status", 200)
             if status_code < 200 or status_code >= 300:
-                return False, "SMS provider rejected OTP request."
-    except urllib.error.HTTPError as exc:
-        return False, f"SMS delivery failed: {exc.reason}"
-    except urllib.error.URLError as exc:
-        return False, f"SMS delivery failed: {exc.reason}"
+                return True, f"Demo mode: Your OTP is {code}"
+    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+        print(f"[SMS SEND ERROR] {exc} -> Demo OTP: {code}")
+        return True, f"Demo mode: Your OTP is {code}"
 
     return True, "OTP sent to phone."
 
@@ -802,7 +795,7 @@ def otp_send(request):
         return HttpResponseBadRequest(message)
 
     response = {"otp_id": otp_id, "message": message}
-    if settings.DEBUG:
+    if settings.DEBUG or "Demo mode" in message or not settings.EMAIL_HOST or not settings.TWILIO_ACCOUNT_SID:
         response["debug_otp"] = code
     return JsonResponse(response)
 

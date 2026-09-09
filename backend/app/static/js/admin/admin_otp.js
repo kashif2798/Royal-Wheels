@@ -65,9 +65,16 @@ async function adminSendOtp(flow, channel, target, purpose) {
   const data = await adminPostJson("/api/otp/send/", { purpose, channel, target });
   adminOtpState[flow][channel] = { otpId: String(data.otp_id || ""), target: String(target).trim(), verified: false };
   if (data.debug_otp) {
-    alert(`OTP sent. DEV OTP: ${data.debug_otp}`);
+    const targetInputId = flow === "adminSignup"
+      ? (channel === "email" ? "adminSignupEmailOtp" : "adminSignupPhoneOtp")
+      : (channel === "email" ? "adminForgotEmailOtp" : "adminForgotPhoneOtp");
+    const otpInput = document.getElementById(targetInputId);
+    if (otpInput) {
+      otpInput.value = data.debug_otp;
+    }
+    alert(`Your OTP is: ${data.debug_otp}\n\n(Auto-filled for you in Demo Mode. Click 'Verify' to proceed)`);
   } else {
-    alert("OTP sent.");
+    alert("OTP sent to your " + channel + ".");
   }
 }
 
