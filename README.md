@@ -2,7 +2,7 @@
 
 Royal Wheels is a vehicle rental platform built with Django. It connects customers who want to rent cars and bikes with local rental partners, and gives each partner a management console for their fleet, bookings, expenses and revenue.
 
-**Live application:** DEPLOYED_URL_PLACEHOLDER
+**Live application:** https://royal-wheels.onrender.com
 
 **Repository:** https://github.com/kashif2798/Royal-Wheels
 
